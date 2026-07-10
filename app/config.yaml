@@ -1,0 +1,95 @@
+# AI Usage Logger Configuration
+# Instructor-editable form fields. Edit labels and placeholders as needed.
+# Do NOT change field names or types unless you know what you're doing.
+# Note: Save this file as UTF-8 if editing to avoid encoding issues
+
+# Shown in the browser tab and page header, and stamped into every saved
+# log file. Set this to the course/project name so it's easy to tell
+# instances apart if a student runs this tool for more than one class.
+title: "Senior Design"
+
+checkin:
+  - field: goal
+    label: "What's today's goal?"
+    type: textarea
+    placeholder: "What are you trying to accomplish this session?"
+
+  - field: planned_duration
+    label: "How long are you planning to work on it?"
+    type: text
+    placeholder: "e.g. 1.5 hrs, 2 hours, 30 minutes"
+
+  - field: checkin_notes
+    label: "Other helpful notes?"
+    type: textarea
+    placeholder: "Anything else worth noting before you start -- context, blockers, reminders."
+
+promptlog:
+  - field: intent
+    label: "What is your intended process and outcome today?"
+    type: textarea
+    placeholder: "What are you trying to do, and what do you expect to come out of it?"
+
+  - field: own_understanding
+    label: "If you are going to use AI, explain the concept and your expected approach/output in your own words first."
+    type: textarea
+    placeholder: "[FILL THIS BEFORE using the AI] What do you already know about this? What do you think should happen?"
+
+  - field: prompts
+    label: "Log a prompt (what YOU typed to the AI, not the AI's response)."
+    type: prompt_list
+    placeholder: "Paste only YOUR prompt/question sent to the AI. Do NOT paste the AI's response. Add one entry per prompt."
+
+  - field: prompt_notes
+    label: "Notes on process"
+    type: prompt_notes
+    placeholder: "-- anything future you might find helpful --"
+
+  - field: reflection_outcome
+    label: "What happened?"
+    type: textarea
+    placeholder: "What did you end up with? What's your overall impression of it, compared to what you predicted before prompting?"
+
+  - field: reflection_errors
+    label: "Frustrations?"
+    type: textarea
+    placeholder: "Did the AI get anything wrong, miss something, or hit a limitation? If not, say so."
+
+  - field: reflection_surprises
+    label: "Successes?"
+    type: textarea
+    placeholder: "Anything that worked better than expected, or a genuinely useful surprise?"
+
+artifact:
+  - field: artifact_content
+    label: "Paste the AI's response or output here (not your prompt)"
+    type: textarea
+    placeholder: "Paste the AI's output, code, or explanation you want to save. This is different from the prompt box above -- AI output belongs here, not there."
+
+checkout:
+  - field: duration_actual
+    label: "Time use reflection?"
+    type: textarea
+    placeholder: "How did the time you spent compare to what you planned?"
+
+  - field: final_thoughts
+    label: "Final thoughts?"
+    type: textarea
+    placeholder: "What did you accomplish, what surprised you, what's still unresolved?"
+
+  - field: next_start
+    label: "What's next?"
+    type: textarea
+    placeholder: "What should next session pick up where this one left off?"
+
+  - field: confidence
+    label: "How confident do you feel about this process?"
+    type: scale_1_5
+
+  - field: clarity
+    label: "How clear are the goals and expectations?"
+    type: scale_1_5
+
+  - field: support
+    label: "Do you have the resources to proceed?"
+    type: scale_1_5

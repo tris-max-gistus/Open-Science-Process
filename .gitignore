@@ -1,0 +1,22 @@
+# Python
+__pycache__/
+*.pyc
+
+# Virtual environment (regenerated automatically by start.py -- never commit)
+app/venv/
+
+# Runtime-generated local state
+app/launch_log.txt
+app/next_hint.json
+logs/
+
+# Student-added content (artifacts/README.md is the only tracked file here)
+artifacts/*
+!artifacts/README.md
+
+# Submission exports
+*.zip
+
+# OS cruft
+.DS_Store
+Thumbs.db

@@ -1,0 +1,52 @@
+HOW TO USE THIS FILE
+If the app won't start or gives you an error, fill in the blanks below,
+then copy this WHOLE file and paste it into Claude (claude.ai) or another
+AI chat, and ask for help. The more you fill in, the faster it can help.
+
+------------------------------------------------------------
+ABOUT MY SITUATION (fill this in)
+
+Operating system (Windows/Mac, version if known):
+
+Comfort with computers/command line, 0-5 (0 = never used a terminal,
+5 = very comfortable):
+
+How I tried to launch the app (Start.vbs / app\start.bat /
+start.command / typed "python app/start.py" myself / other):
+
+What happened (paste the exact error message, or describe what you saw
+on screen):
+
+Did a browser window open at all?
+
+Anything unusual about my setup (folder is in OneDrive/Google Drive,
+running from a USB drive, Python installed some other way, antivirus
+flagged something, etc.):
+
+------------------------------------------------------------
+CONTEXT FOR THE AI HELPING ME (leave this part as-is)
+
+This is a local Flask web app ("AI Usage Logger") for a course. Its
+internals live in an `app/` subfolder that students aren't meant to
+need to open. It's meant to be launched by double-clicking Start.vbs
+or start.command in the top-level project folder (or app\start.bat for
+a visible-console debug fallback), which:
+  1. Creates a Python virtual environment (app/venv/) if it doesn't exist
+  2. Installs Flask + PyYAML into it
+  3. Runs app/app.py, a Flask server on http://localhost:5000
+  4. Opens that URL in the default browser
+
+Known issues to check first:
+  - Requires Python 3.8+ already installed and on PATH ("python --version"
+    should work in a terminal)
+  - If port 5000 is already in use (e.g. an old copy of this app still
+    running), the server fails to start with a clear "Port 5000 is in
+    use" error - closing other windows running this app usually fixes it
+  - Start.vbs needs pythonw.exe next to python.exe (present with a
+    standard python.org install); it logs to app/launch_log.txt if
+    something goes wrong
+  - Nothing is installed system-wide - deleting the app/venv folder and
+    re-running the launcher is a safe way to reset if setup seems broken
+
+Please help me figure out what's wrong and how to fix it, explaining
+steps simply based on the comfort level I noted above.
