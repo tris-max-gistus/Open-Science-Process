@@ -6,7 +6,7 @@
 # Shown in the browser tab and page header, and stamped into every saved
 # log file. Set this to the course/project name so it's easy to tell
 # instances apart if a student runs this tool for more than one class.
-title: "Senior Design"
+title: "Systems Thinking and Open Science"
 
 checkin:
   - field: goal
@@ -26,14 +26,14 @@ checkin:
 
 promptlog:
   - field: intent
-    label: "What is your intended process and outcome today?"
+    label: "What is the intended process and outcome?"
     type: textarea
     placeholder: "What are you trying to do, and what do you expect to come out of it?"
 
   - field: own_understanding
-    label: "If you are going to use AI, explain the concept and your expected approach/output in your own words first."
+    label: "If you are going to use a large language model, explain the expected approach/output in your own words."
     type: textarea
-    placeholder: "[FILL THIS BEFORE using the AI] What do you already know about this? What do you think should happen?"
+    placeholder: "What do you already know about this question? What do you need from the LLM?"
 
   - field: prompts
     label: "Log a prompt (what YOU typed to the AI, not the AI's response)."
@@ -48,12 +48,12 @@ promptlog:
   - field: reflection_outcome
     label: "What happened?"
     type: textarea
-    placeholder: "What did you end up with? What's your overall impression of it, compared to what you predicted before prompting?"
+    placeholder: "What did you end up with? What's your overall impression with today's process?"
 
   - field: reflection_errors
     label: "Frustrations?"
     type: textarea
-    placeholder: "Did the AI get anything wrong, miss something, or hit a limitation? If not, say so."
+    placeholder: "Did the LLM get anything wrong, miss something, or hit a limitation? If not, say so."
 
   - field: reflection_surprises
     label: "Successes?"
@@ -64,13 +64,18 @@ artifact:
   - field: artifact_content
     label: "Paste the AI's response or output here (not your prompt)"
     type: textarea
-    placeholder: "Paste the AI's output, code, or explanation you want to save. This is different from the prompt box above -- AI output belongs here, not there."
+    placeholder: "Paste the AI's output, code, and/or explanation you want to save. --Capture especially helpful LLM OUTPUTS here--."
+
+  - field: artifact_category
+    label: "Give this artifact a handle to search for later?"
+    type: text
+    placeholder: "Thermodynamics, Recipes, Ethical tension between rights & obligations, etc."
 
 checkout:
   - field: duration_actual
     label: "Time use reflection?"
     type: textarea
-    placeholder: "How did the time you spent compare to what you planned?"
+    placeholder: "How did the time you spent compare to what you planned?(by how much?)"
 
   - field: final_thoughts
     label: "Final thoughts?"
@@ -80,7 +85,7 @@ checkout:
   - field: next_start
     label: "What's next?"
     type: textarea
-    placeholder: "What should next session pick up where this one left off?"
+    placeholder: "What would be helpful to remember when you return to this process?"
 
   - field: confidence
     label: "How confident do you feel about this process?"
