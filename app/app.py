@@ -70,7 +70,8 @@ SESSION_STATE = {
     "promptlog_counter": 0,
     "active_promptlog": None,
     "shutdown_token": 0,
-    "current_checkin_goal": None
+    "current_checkin_goal": None,
+    "current_checkin_timestamp": None
 }
 
 @app.before_request
@@ -747,8 +748,19 @@ HTML_TEMPLATE = """
             modal.classList.remove('modal-large');
             let html = `<h2>${getTitle(eventType)}</h2>`;
 
+            let substitutions = {};
+            if (eventType === 'checkout') {
+                const checkinTs = sessionState.current_checkin_timestamp;
+                if (checkinTs) {
+                    const hours = (Date.now() - new Date(checkinTs).getTime()) / 3600000;
+                    substitutions.hours = `${hours.toFixed(1)} hours`;
+                } else {
+                    substitutions.hours = 'an unknown amount of time';
+                }
+            }
+
             config.forEach(fieldConfig => {
-                html += createFormField(fieldConfig);
+                html += createFormField(fieldConfig, substitutions);
             });
 
             html += `
@@ -1028,8 +1040,12 @@ HTML_TEMPLATE = """
             modal.innerHTML = html;
         }
 
-        function createFormField(fieldConfig) {
-            const { field, label, placeholder, type } = fieldConfig;
+        function createFormField(fieldConfig, substitutions = {}) {
+            const { field, placeholder, type } = fieldConfig;
+            let label = fieldConfig.label;
+            for (const [key, val] of Object.entries(substitutions)) {
+                label = label.split(`{${key}}`).join(val);
+            }
 
             if (type === 'textarea') {
                 return `
@@ -1209,7 +1225,8 @@ def get_session_state():
         "session_id": SESSION_STATE["session_id"],
         "promptlog_counter": SESSION_STATE["promptlog_counter"],
         "active_promptlog": SESSION_STATE["active_promptlog"],
-        "current_checkin_goal": SESSION_STATE["current_checkin_goal"]
+        "current_checkin_goal": SESSION_STATE["current_checkin_goal"],
+        "current_checkin_timestamp": SESSION_STATE["current_checkin_timestamp"]
     })
 
 @app.route("/api/next-hint")
@@ -1228,6 +1245,7 @@ def submit_checkin():
     get_session_id()  # Initialize session
     save_json("checkin", data)
     SESSION_STATE["current_checkin_goal"] = data.get("goal", "")
+    SESSION_STATE["current_checkin_timestamp"] = data["timestamp"]
     return jsonify({"status": "ok"})
 
 @app.route("/api/checkout", methods=["POST"])
@@ -1235,6 +1253,14 @@ def submit_checkout():
     """Save check-out form."""
     data = request.json
     data["timestamp"] = datetime.now().isoformat()
+
+    checkin_ts = SESSION_STATE.get("current_checkin_timestamp")
+    if checkin_ts:
+        elapsed = (datetime.now() - datetime.fromisoformat(checkin_ts)).total_seconds() / 3600
+        data["elapsed_hours"] = round(elapsed, 2)
+    else:
+        data["elapsed_hours"] = None
+
     save_json("checkout", data)
 
     # Persist next_start as a hint for the next session's check-in

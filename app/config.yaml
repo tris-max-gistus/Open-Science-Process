@@ -73,9 +73,9 @@ artifact:
 
 checkout:
   - field: duration_actual
-    label: "Time use reflection?"
+    label: "It has been {hours}. Any thoughts on process time quality?"
     type: textarea
-    placeholder: "How did the time you spent compare to what you planned?(by how much?)"
+    placeholder: "More or less time than you expected? Did it feel fast or slow?"
 
   - field: final_thoughts
     label: "Final thoughts?"
