@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Simple launcher for the AI Usage Logger.
+Simple launcher for the LLM Usage Logger.
 Handles venv setup, dependency installation, and browser opening.
 Works on Windows, macOS, and Linux.
 """
@@ -56,7 +56,7 @@ def start_server():
     python_exe = get_venv_python()
 
     print("\n" + "="*60)
-    print("Starting AI Usage Logger...")
+    print("Starting LLM Usage Logger...")
     print("Opening http://localhost:5000 in your browser")
     print("Press Ctrl+C to stop the server")
     print("="*60 + "\n")
@@ -92,7 +92,7 @@ def show_error_box(message):
     if platform.system() == "Windows":
         try:
             import ctypes
-            ctypes.windll.user32.MessageBoxW(0, message, "AI Usage Logger - Error", 0x10)
+            ctypes.windll.user32.MessageBoxW(0, message, "LLM Usage Logger - Error", 0x10)
         except Exception:
             pass
 
@@ -125,7 +125,7 @@ if __name__ == "__main__":
         print("  - Making sure Python 3.7+ is installed")
         if headless:
             show_error_box(
-                f"AI Usage Logger failed to start:\n\n{e}\n\n"
+                f"LLM Usage Logger failed to start:\n\n{e}\n\n"
                 f"See launch_log.txt in this folder for details."
             )
         sys.exit(1)

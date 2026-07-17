@@ -1,4 +1,4 @@
-' Launches the AI Usage Logger with no visible console window.
+' Launches the LLM Usage Logger with no visible console window.
 ' Double-click this file (or a shortcut to it) to start the app silently;
 ' your browser will open once it's ready. If something goes wrong, a
 ' small error window will appear and details are saved to launch_log.txt

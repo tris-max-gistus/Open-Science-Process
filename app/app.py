@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Flask backend for AI Usage Logger.
+Flask backend for LLM Usage Logger.
 Reads config.yaml, serves forms, handles submissions.
 """
 
@@ -53,22 +53,22 @@ def load_config():
         return yaml.safe_load(f)
 
 CONFIG = load_config()
-TITLE = CONFIG.get("title") or "AI Usage Logger"
+TITLE = CONFIG.get("title") or "LLM Usage Logger"
 
 # Session state (in-memory, single student at a time)
 # Structure: {
 #   "session_id": "timestamp",
-#   "promptlog_counter": 1,
-#   "active_promptlog": {
+#   "inputlog_counter": 1,
+#   "active_inputlog": {
 #       "intent": "...", "own_understanding": "...",
-#       "prompts": [{"index": 1, "text": "...", "timestamp": "..."}, ...],
+#       "inputs": [{"index": 1, "text": "...", "timestamp": "..."}, ...],
 #       "timestamp": "..."
 #   }
 # }
 SESSION_STATE = {
     "session_id": None,
-    "promptlog_counter": 0,
-    "active_promptlog": None,
+    "inputlog_counter": 0,
+    "active_inputlog": None,
     "shutdown_token": 0,
     "current_checkin_goal": None,
     "current_checkin_timestamp": None
@@ -84,7 +84,7 @@ def get_session_id():
     """Get or create current session ID (timestamp-based)."""
     if SESSION_STATE["session_id"] is None:
         SESSION_STATE["session_id"] = datetime.now().strftime("%Y%m%d_%H%M%S")
-        SESSION_STATE["promptlog_counter"] = 0
+        SESSION_STATE["inputlog_counter"] = 0
     return SESSION_STATE["session_id"]
 
 def save_json(event_type, data):
@@ -96,10 +96,10 @@ def save_json(event_type, data):
         filename = f"session_{session_id}_checkin.json"
     elif event_type == "checkout":
         filename = f"session_{session_id}_checkout.json"
-    elif event_type == "promptlog":
-        SESSION_STATE["promptlog_counter"] += 1
-        counter = SESSION_STATE["promptlog_counter"]
-        filename = f"session_{session_id}_promptlog_{counter}.json"
+    elif event_type == "inputlog":
+        SESSION_STATE["inputlog_counter"] += 1
+        counter = SESSION_STATE["inputlog_counter"]
+        filename = f"session_{session_id}_inputlog_{counter}.json"
     else:
         filename = f"session_{session_id}_{event_type}.json"
 
@@ -304,21 +304,21 @@ HTML_TEMPLATE = """
             font-family: inherit;
         }
 
-        .btn-checkin, .btn-promptlog, .btn-checkout {
+        .btn-checkin, .btn-inputlog, .btn-checkout {
             background: var(--dark-btn);
             color: white;
             text-align: left;
         }
 
-        .btn-checkin:hover, .btn-promptlog:hover, .btn-checkout:hover {
+        .btn-checkin:hover, .btn-inputlog:hover, .btn-checkout:hover {
             background: var(--dark-btn-hover);
         }
 
-        .btn-promptlog.active-log {
+        .btn-inputlog.active-log {
             background: var(--accent);
         }
 
-        .btn-promptlog.active-log:hover {
+        .btn-inputlog.active-log:hover {
             background: var(--accent-hover);
         }
 
@@ -416,7 +416,7 @@ HTML_TEMPLATE = """
             border: 1px solid var(--accent);
         }
 
-        textarea.log-entry-input.entry-prompt {
+        textarea.log-entry-input.entry-input {
             font-family: "Consolas", "Menlo", "Courier New", monospace;
             font-size: 13px;
         }
@@ -528,7 +528,7 @@ HTML_TEMPLATE = """
             margin-top: 4px;
         }
 
-        /* Active prompt log panel */
+        /* Active input log panel */
         .log-summary {
             background: var(--surface-alt);
             border: 1px solid var(--border);
@@ -543,7 +543,7 @@ HTML_TEMPLATE = """
             color: var(--text);
         }
 
-        .prompt-count-badge {
+        .input-count-badge {
             display: inline-block;
             background: var(--accent);
             color: white;
@@ -554,7 +554,7 @@ HTML_TEMPLATE = """
             margin-left: 6px;
         }
 
-        .prompt-list {
+        .input-list {
             max-height: 180px;
             overflow-y: auto;
             border: 1px solid var(--border);
@@ -562,31 +562,31 @@ HTML_TEMPLATE = """
             margin-bottom: 18px;
         }
 
-        .prompt-list-item {
+        .input-list-item {
             padding: 10px 12px;
             border-bottom: 1px solid var(--border);
             font-size: 13px;
         }
 
-        .prompt-list-item:last-child {
+        .input-list-item:last-child {
             border-bottom: none;
         }
 
-        .prompt-list-item .prompt-index {
+        .input-list-item .input-index {
             color: var(--accent);
             font-weight: 600;
             font-size: 12px;
             margin-right: 6px;
         }
 
-        .prompt-list-item .prompt-text {
+        .input-list-item .input-text {
             color: var(--text-body);
             white-space: pre-wrap;
             font-family: "Consolas", "Menlo", "Courier New", monospace;
             font-size: 12px;
         }
 
-        .prompt-index.note-marker {
+        .input-index.note-marker {
             color: var(--text-muted);
         }
 
@@ -597,7 +597,7 @@ HTML_TEMPLATE = """
             white-space: pre-wrap;
         }
 
-        .prompt-list-empty {
+        .input-list-empty {
             padding: 16px;
             text-align: center;
             color: var(--text-faint);
@@ -624,7 +624,7 @@ HTML_TEMPLATE = """
             <button class="btn-checkin" onclick="openModal('checkin')">
                 Session Check-In
             </button>
-            <button class="btn-promptlog" id="promptlogBtn" onclick="openModal('promptlog')">
+            <button class="btn-inputlog" id="inputlogBtn" onclick="openModal('inputlog')">
                 Process Log
             </button>
             <button class="btn-checkout" onclick="openModal('checkout')">
@@ -683,10 +683,10 @@ HTML_TEMPLATE = """
         }
 
         function updateButtonLabels() {
-            const btn = document.getElementById('promptlogBtn');
-            const active = sessionState.active_promptlog;
-            if (active && active.prompts) {
-                const n = active.prompts.length;
+            const btn = document.getElementById('inputlogBtn');
+            const active = sessionState.active_inputlog;
+            if (active && active.inputs) {
+                const n = active.inputs.length;
                 btn.classList.add('active-log');
                 btn.innerHTML = `Process Log <span class="btn-count">${n} logged &mdash; continue</span>`;
             } else {
@@ -728,11 +728,11 @@ HTML_TEMPLATE = """
             await configReady;
             await loadSessionState();
 
-            if (eventType === 'promptlog') {
-                if (sessionState.active_promptlog) {
-                    renderActivePromptLog();
+            if (eventType === 'inputlog') {
+                if (sessionState.active_inputlog) {
+                    renderActiveInputLog();
                 } else {
-                    renderPromptLogStart();
+                    renderInputLogStart();
                 }
                 document.getElementById('modalOverlay').classList.add('active');
                 return;
@@ -795,22 +795,22 @@ HTML_TEMPLATE = """
             }
         }
 
-        function renderPromptLogStart() {
+        function renderInputLogStart() {
             const modal = document.getElementById('modal');
             modal.classList.remove('modal-large');
 
-            const intentConfig = CONFIG.promptlog.find(f => f.field === 'intent');
-            const understandingConfig = CONFIG.promptlog.find(f => f.field === 'own_understanding');
+            const intentConfig = CONFIG.inputlog.find(f => f.field === 'intent');
+            const understandingConfig = CONFIG.inputlog.find(f => f.field === 'own_understanding');
 
             let html = `
                 <h2>Start Process Log</h2>
-                <div class="modal-subtext">Answer these before you open the AI. This starts one log for the whole work block &mdash; you'll add individual prompts to it as you go.</div>
+                <div class="modal-subtext">Answer these before you open the LLM. This starts one log for the whole work block &mdash; you'll add individual inputs to it as you go.</div>
             `;
             html += createFormField(intentConfig);
             html += createFormField(understandingConfig);
             html += `
                 <div class="form-buttons">
-                    <button class="btn-secondary" onclick="startPromptLog()">Begin Log</button>
+                    <button class="btn-secondary" onclick="startInputLog()">Begin Log</button>
                     <button class="btn-cancel" onclick="closeModal()">Cancel</button>
                 </div>
             `;
@@ -818,12 +818,12 @@ HTML_TEMPLATE = """
             modal.innerHTML = html;
         }
 
-        async function startPromptLog() {
+        async function startInputLog() {
             const intent = document.getElementById('intent')?.value || '';
             const own_understanding = document.getElementById('own_understanding')?.value || '';
 
             try {
-                const response = await fetch('/api/promptlog/start', {
+                const response = await fetch('/api/inputlog/start', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ intent, own_understanding })
@@ -831,7 +831,7 @@ HTML_TEMPLATE = """
 
                 if (response.ok) {
                     await loadSessionState();
-                    renderActivePromptLog();
+                    renderActiveInputLog();
                 } else {
                     showError('Failed to start log');
                 }
@@ -840,44 +840,44 @@ HTML_TEMPLATE = """
             }
         }
 
-        function renderActivePromptLog() {
+        function renderActiveInputLog() {
             const modal = document.getElementById('modal');
             modal.classList.add('modal-large');
 
-            const active = sessionState.active_promptlog;
-            const promptConfig = CONFIG.promptlog.find(f => f.field === 'prompts');
-            const notesConfig = CONFIG.promptlog.find(f => f.field === 'prompt_notes');
-            const entries = (active && active.prompts) || [];
+            const active = sessionState.active_inputlog;
+            const inputConfig = CONFIG.inputlog.find(f => f.field === 'inputs');
+            const notesConfig = CONFIG.inputlog.find(f => f.field === 'input_notes');
+            const entries = (active && active.inputs) || [];
 
             let listHtml = '';
             if (entries.length === 0) {
-                listHtml = '<div class="prompt-list-empty">Nothing logged yet</div>';
+                listHtml = '<div class="input-list-empty">Nothing logged yet</div>';
             } else {
                 listHtml = entries.map(e => e.type === 'note' ? `
-                    <div class="prompt-list-item">
-                        <span class="prompt-index note-marker">-</span>
+                    <div class="input-list-item">
+                        <span class="input-index note-marker">-</span>
                         <span class="note-text">${escapeHtml(e.text)}</span>
                     </div>
                 ` : `
-                    <div class="prompt-list-item">
-                        <span class="prompt-index">#${e.index}</span>
-                        <span class="prompt-text">${escapeHtml(e.text)}</span>
+                    <div class="input-list-item">
+                        <span class="input-index">#${e.index}</span>
+                        <span class="input-text">${escapeHtml(e.text)}</span>
                     </div>
                 `).join('');
             }
 
             let html = `
-                <h2>Process Log <span class="prompt-count-badge">${entries.length} logged</span></h2>
+                <h2>Process Log <span class="input-count-badge">${entries.length} logged</span></h2>
                 <div class="log-summary">
                     <strong>Intent:</strong> ${escapeHtml(active.intent || '')}
                 </div>
-                <div class="prompt-list">${listHtml}</div>
+                <div class="input-list">${listHtml}</div>
                 <div class="form-group">
-                    <label for="new_prompt_text">${promptConfig.label}</label>
-                    <textarea id="new_prompt_text" class="log-entry-input entry-prompt" placeholder="${promptConfig.placeholder || ''}"></textarea>
+                    <label for="new_input_text">${inputConfig.label}</label>
+                    <textarea id="new_input_text" class="log-entry-input entry-input" placeholder="${inputConfig.placeholder || ''}"></textarea>
                 </div>
                 <div class="form-buttons">
-                    <button class="btn-secondary" onclick="addPrompt()">Add Prompt</button>
+                    <button class="btn-secondary" onclick="addInput()">Add Input</button>
                 </div>
                 <div class="form-group">
                     <label for="new_note_text">${notesConfig.label}</label>
@@ -887,7 +887,7 @@ HTML_TEMPLATE = """
                     <button class="btn-secondary" onclick="addNote()">Add Note</button>
                 </div>
                 <div class="form-buttons">
-                    <button class="btn-cancel" onclick="renderArtifactForm()">Save an AI Output</button>
+                    <button class="btn-cancel" onclick="renderArtifactForm()">Save an LLM Output</button>
                     <button class="btn-submit" onclick="renderReflectionForm()">Finish &amp; Reflect</button>
                 </div>
                 <div class="form-buttons">
@@ -898,12 +898,12 @@ HTML_TEMPLATE = """
             modal.innerHTML = html;
         }
 
-        async function addPrompt() {
-            const text = document.getElementById('new_prompt_text')?.value || '';
+        async function addInput() {
+            const text = document.getElementById('new_input_text')?.value || '';
             if (!text.trim()) return;
 
             try {
-                const response = await fetch('/api/promptlog/add-prompt', {
+                const response = await fetch('/api/inputlog/add-input', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ text })
@@ -911,9 +911,9 @@ HTML_TEMPLATE = """
 
                 if (response.ok) {
                     await loadSessionState();
-                    renderActivePromptLog();
+                    renderActiveInputLog();
                 } else {
-                    showError('Failed to add prompt');
+                    showError('Failed to add input');
                 }
             } catch (error) {
                 showError('Error: ' + error.message);
@@ -925,7 +925,7 @@ HTML_TEMPLATE = """
             if (!text.trim()) return;
 
             try {
-                const response = await fetch('/api/promptlog/add-note', {
+                const response = await fetch('/api/inputlog/add-note', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ text })
@@ -933,7 +933,7 @@ HTML_TEMPLATE = """
 
                 if (response.ok) {
                     await loadSessionState();
-                    renderActivePromptLog();
+                    renderActiveInputLog();
                 } else {
                     showError('Failed to add note');
                 }
@@ -951,7 +951,7 @@ HTML_TEMPLATE = """
             const tags = [['helpful', 'Helpful'], ['problematic', 'Problematic'], ['personal_value', 'Personal value']];
 
             let html = `
-                <h2>Save an AI Output</h2>
+                <h2>Save an LLM Output</h2>
                 <div class="modal-subtext">This is the place to log helpful model Outputs and other products generated by the process.</div>
                 <div class="form-group">
                     <label for="artifact_content">${contentConfig.label}</label>
@@ -974,7 +974,7 @@ HTML_TEMPLATE = """
                 </div>
                 <div class="form-buttons">
                     <button class="btn-submit" onclick="submitArtifact()">Document</button>
-                    <button class="btn-cancel" onclick="renderActivePromptLog()">Cancel</button>
+                    <button class="btn-cancel" onclick="renderActiveInputLog()">Cancel</button>
                 </div>
             `;
 
@@ -996,7 +996,7 @@ HTML_TEMPLATE = """
             }
 
             try {
-                const response = await fetch('/api/promptlog/artifact', {
+                const response = await fetch('/api/inputlog/artifact', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ content, category, tag })
@@ -1004,7 +1004,7 @@ HTML_TEMPLATE = """
 
                 if (response.ok) {
                     showNotification('Artifact saved');
-                    renderActivePromptLog();
+                    renderActiveInputLog();
                 } else {
                     showError('Failed to save artifact');
                 }
@@ -1017,15 +1017,15 @@ HTML_TEMPLATE = """
             const modal = document.getElementById('modal');
             modal.classList.remove('modal-large');
 
-            const outcomeConfig = CONFIG.promptlog.find(f => f.field === 'reflection_outcome');
-            const errorsConfig = CONFIG.promptlog.find(f => f.field === 'reflection_errors');
-            const surprisesConfig = CONFIG.promptlog.find(f => f.field === 'reflection_surprises');
-            const active = sessionState.active_promptlog;
-            const n = (active && active.prompts) ? active.prompts.filter(p => p.type === 'prompt').length : 0;
+            const outcomeConfig = CONFIG.inputlog.find(f => f.field === 'reflection_outcome');
+            const errorsConfig = CONFIG.inputlog.find(f => f.field === 'reflection_errors');
+            const surprisesConfig = CONFIG.inputlog.find(f => f.field === 'reflection_surprises');
+            const active = sessionState.active_inputlog;
+            const n = (active && active.inputs) ? active.inputs.filter(p => p.type === 'input').length : 0;
 
             let html = `
                 <h2>Finish This Process Log</h2>
-                <div class="modal-subtext">${n} prompt${n === 1 ? '' : 's'} logged in this block. Reflect before closing it out.</div>
+                <div class="modal-subtext">${n} input${n === 1 ? '' : 's'} logged in this block. Reflect before closing it out.</div>
             `;
             html += createFormField(outcomeConfig);
             html += createFormField(errorsConfig);
@@ -1033,7 +1033,7 @@ HTML_TEMPLATE = """
             html += `
                 <div class="form-buttons">
                     <button class="btn-submit" onclick="submitReflection()">Save &amp; Close Log</button>
-                    <button class="btn-cancel" onclick="renderActivePromptLog()">Back</button>
+                    <button class="btn-cancel" onclick="renderActiveInputLog()">Back</button>
                 </div>
             `;
 
@@ -1082,7 +1082,7 @@ HTML_TEMPLATE = """
         function getTitle(eventType) {
             const titles = {
                 checkin: 'Session Check-In',
-                promptlog: 'Process Log',
+                inputlog: 'Process Log',
                 checkout: 'Session Check-Out'
             };
             return titles[eventType] || 'Form';
@@ -1121,7 +1121,7 @@ HTML_TEMPLATE = """
             const reflection_surprises = document.getElementById('reflection_surprises')?.value || '';
 
             try {
-                const response = await fetch('/api/promptlog-reflection', {
+                const response = await fetch('/api/inputlog-reflection', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ reflection_outcome, reflection_errors, reflection_surprises })
@@ -1130,7 +1130,7 @@ HTML_TEMPLATE = """
                 if (response.ok) {
                     await loadSessionState();
                     closeModal();
-                    showNotification('Prompt log saved');
+                    showNotification('Input log saved');
                 } else {
                     showError('Failed to save reflection');
                 }
@@ -1220,11 +1220,11 @@ def get_config():
 
 @app.route("/api/session-state")
 def get_session_state():
-    """Return current session state (active prompt log, etc)."""
+    """Return current session state (active input log, etc)."""
     return jsonify({
         "session_id": SESSION_STATE["session_id"],
-        "promptlog_counter": SESSION_STATE["promptlog_counter"],
-        "active_promptlog": SESSION_STATE["active_promptlog"],
+        "inputlog_counter": SESSION_STATE["inputlog_counter"],
+        "active_inputlog": SESSION_STATE["active_inputlog"],
         "current_checkin_goal": SESSION_STATE["current_checkin_goal"],
         "current_checkin_timestamp": SESSION_STATE["current_checkin_timestamp"]
     })
@@ -1272,59 +1272,59 @@ def submit_checkout():
 
     return jsonify({"status": "ok"})
 
-@app.route("/api/promptlog/start", methods=["POST"])
-def start_promptlog():
-    """Begin a new active prompt log (intent + own_understanding)."""
+@app.route("/api/inputlog/start", methods=["POST"])
+def start_inputlog():
+    """Begin a new active input log (intent + own_understanding)."""
     data = request.json
     get_session_id()
-    SESSION_STATE["active_promptlog"] = {
+    SESSION_STATE["active_inputlog"] = {
         "intent": data.get("intent", ""),
         "own_understanding": data.get("own_understanding", ""),
-        "prompts": [],
+        "inputs": [],
         "timestamp": datetime.now().isoformat()
     }
-    return jsonify({"status": "ok", "active_promptlog": SESSION_STATE["active_promptlog"]})
+    return jsonify({"status": "ok", "active_inputlog": SESSION_STATE["active_inputlog"]})
 
-@app.route("/api/promptlog/add-prompt", methods=["POST"])
-def add_prompt():
-    """Append one prompt entry to the active prompt log."""
-    if not SESSION_STATE["active_promptlog"]:
-        return jsonify({"status": "error", "message": "No active prompt log"}), 400
+@app.route("/api/inputlog/add-input", methods=["POST"])
+def add_input():
+    """Append one input entry to the active input log."""
+    if not SESSION_STATE["active_inputlog"]:
+        return jsonify({"status": "error", "message": "No active input log"}), 400
 
     data = request.json
     text = data.get("text", "")
-    prompts = SESSION_STATE["active_promptlog"]["prompts"]
-    next_index = len([p for p in prompts if p.get("type") == "prompt"]) + 1
-    prompts.append({
-        "type": "prompt",
+    inputs = SESSION_STATE["active_inputlog"]["inputs"]
+    next_index = len([p for p in inputs if p.get("type") == "input"]) + 1
+    inputs.append({
+        "type": "input",
         "index": next_index,
         "text": text,
         "timestamp": datetime.now().isoformat()
     })
-    return jsonify({"status": "ok", "active_promptlog": SESSION_STATE["active_promptlog"]})
+    return jsonify({"status": "ok", "active_inputlog": SESSION_STATE["active_inputlog"]})
 
-@app.route("/api/promptlog/add-note", methods=["POST"])
+@app.route("/api/inputlog/add-note", methods=["POST"])
 def add_note():
-    """Append one note entry to the active prompt log (independent of prompts, not numbered)."""
-    if not SESSION_STATE["active_promptlog"]:
-        return jsonify({"status": "error", "message": "No active prompt log"}), 400
+    """Append one note entry to the active input log (independent of inputs, not numbered)."""
+    if not SESSION_STATE["active_inputlog"]:
+        return jsonify({"status": "error", "message": "No active input log"}), 400
 
     data = request.json
     text = data.get("text", "")
-    prompts = SESSION_STATE["active_promptlog"]["prompts"]
-    prompts.append({
+    inputs = SESSION_STATE["active_inputlog"]["inputs"]
+    inputs.append({
         "type": "note",
         "index": None,
         "text": text,
         "timestamp": datetime.now().isoformat()
     })
-    return jsonify({"status": "ok", "active_promptlog": SESSION_STATE["active_promptlog"]})
+    return jsonify({"status": "ok", "active_inputlog": SESSION_STATE["active_inputlog"]})
 
-@app.route("/api/promptlog/artifact", methods=["POST"])
+@app.route("/api/inputlog/artifact", methods=["POST"])
 def add_artifact():
-    """Save a flagged AI response as a JSON artifact. No promptlog-JSON-log involvement."""
-    if not SESSION_STATE["active_promptlog"]:
-        return jsonify({"status": "error", "message": "No active prompt log"}), 400
+    """Save a flagged LLM response as a JSON artifact. No inputlog-JSON-log involvement."""
+    if not SESSION_STATE["active_inputlog"]:
+        return jsonify({"status": "error", "message": "No active input log"}), 400
 
     data = request.json or {}
     content = (data.get("content") or "").strip()
@@ -1360,18 +1360,18 @@ def add_artifact():
 
     return jsonify({"status": "ok", "filename": filename})
 
-@app.route("/api/promptlog-reflection", methods=["POST"])
-def submit_promptlog_reflection():
-    """Save reflection to active prompt log and finalize it."""
+@app.route("/api/inputlog-reflection", methods=["POST"])
+def submit_inputlog_reflection():
+    """Save reflection to active input log and finalize it."""
     data = request.json
 
-    if SESSION_STATE["active_promptlog"]:
-        SESSION_STATE["active_promptlog"]["reflection_outcome"] = data.get("reflection_outcome", "")
-        SESSION_STATE["active_promptlog"]["reflection_errors"] = data.get("reflection_errors", "")
-        SESSION_STATE["active_promptlog"]["reflection_surprises"] = data.get("reflection_surprises", "")
-        SESSION_STATE["active_promptlog"]["reflection_timestamp"] = datetime.now().isoformat()
-        save_json("promptlog", SESSION_STATE["active_promptlog"])
-        SESSION_STATE["active_promptlog"] = None
+    if SESSION_STATE["active_inputlog"]:
+        SESSION_STATE["active_inputlog"]["reflection_outcome"] = data.get("reflection_outcome", "")
+        SESSION_STATE["active_inputlog"]["reflection_errors"] = data.get("reflection_errors", "")
+        SESSION_STATE["active_inputlog"]["reflection_surprises"] = data.get("reflection_surprises", "")
+        SESSION_STATE["active_inputlog"]["reflection_timestamp"] = datetime.now().isoformat()
+        save_json("inputlog", SESSION_STATE["active_inputlog"])
+        SESSION_STATE["active_inputlog"] = None
 
     return jsonify({"status": "ok"})
 
@@ -1394,7 +1394,7 @@ def shutdown():
     return ("", 204)
 
 if __name__ == "__main__":
-    print("Starting AI Usage Logger on http://localhost:5000")
+    print("Starting LLM Usage Logger on http://localhost:5000")
     print("Closing the browser tab will automatically stop this server.")
     try:
         app.run(debug=False, port=5000)

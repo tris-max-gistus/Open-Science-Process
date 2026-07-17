@@ -25,7 +25,7 @@ except ImportError:
 APP_DIR = Path(__file__).resolve().parent      # UI/app  (config.yaml lives here)
 PROJECT_ROOT = APP_DIR.parent                    # UI      (logs/, artifacts/, and the output zip live here)
 
-SUMMARY_SCHEMA_VERSION = 2
+SUMMARY_SCHEMA_VERSION = 3
 
 # Instructor-analysis-only threshold (not instructor/student form config --
 # deliberately not exposed in config.yaml). Character count after .strip().
@@ -37,7 +37,7 @@ FALLBACK_SCALE_FIELDS = ["confidence", "clarity", "support"]
 
 CHECKIN_RE = re.compile(r"^session_(?P<id>.+)_checkin\.json$")
 CHECKOUT_RE = re.compile(r"^session_(?P<id>.+)_checkout\.json$")
-PROMPTLOG_RE = re.compile(r"^session_(?P<id>.+)_promptlog_\d+\.json$")
+INPUTLOG_RE = re.compile(r"^session_(?P<id>.+)_inputlog_\d+\.json$")
 
 
 def get_title_slug():
@@ -47,7 +47,7 @@ def get_title_slug():
     with open(APP_DIR / "config.yaml") as f:
         config = yaml.safe_load(f) or {}
     title = config.get("title")
-    if not title or title == "AI Usage Logger":
+    if not title or title == "LLM Usage Logger":
         return None
     slug = re.sub(r"[^a-zA-Z0-9]+", "_", title).strip("_").lower()
     return slug or None
@@ -89,57 +89,52 @@ def _load_json_files(logs_path, pattern):
 
 
 def compute_counts_and_pairs(logs_path):
-    """Return (counts, pairs, checkins, checkouts, promptlogs) -- the loaded
+    """Return (counts, pairs, checkins, checkouts, inputlogs) -- the loaded
     file-lists are reused by every metric below to avoid re-globbing."""
     checkins = _load_json_files(logs_path, CHECKIN_RE)
     checkouts = _load_json_files(logs_path, CHECKOUT_RE)
-    promptlogs = _load_json_files(logs_path, PROMPTLOG_RE)
+    inputlogs = _load_json_files(logs_path, INPUTLOG_RE)
 
     checkin_ids = {sid for _, sid, _ in checkins}
     checkout_ids = {sid for _, sid, _ in checkouts}
 
     counts = {
         "checkin": len(checkins),
-        "promptlog": len(promptlogs),
+        "inputlog": len(inputlogs),
         "checkout": len(checkouts),
-        "total": len(checkins) + len(promptlogs) + len(checkouts),
+        "total": len(checkins) + len(inputlogs) + len(checkouts),
     }
     pairs = {
         "complete_pairs": len(checkin_ids & checkout_ids),
         "orphaned_checkins": sorted(checkin_ids - checkout_ids),
         "orphaned_checkouts": sorted(checkout_ids - checkin_ids),
     }
-    return counts, pairs, checkins, checkouts, promptlogs
+    return counts, pairs, checkins, checkouts, inputlogs
 
 
-def compute_prompt_metrics(promptlogs):
-    """promptlogs: list of (Path, session_id, data) for promptlog files."""
-    if not promptlogs:
+def compute_input_metrics(inputlogs):
+    """inputlogs: list of (Path, session_id, data) for inputlog files."""
+    if not inputlogs:
         return {
-            "avg_prompts_per_promptlog": None,
-            "avg_prompts_per_session": None,
-            "promptlog_file_count": 0,
-            "session_count_with_promptlogs": 0,
-            "longest_prompt": None,
+            "avg_inputs_per_inputlog": None,
+            "avg_inputs_per_session": None,
+            "inputlog_file_count": 0,
+            "session_count_with_inputlogs": 0,
+            "longest_input": None,
         }
 
     per_file_counts = []
     per_session_counts = {}
-    longest = None  # (length, value, filename, prompt_index)
+    longest = None  # (length, value, filename, input_index)
 
-    for file, sid, data in promptlogs:
-        entries = data.get("prompts") or []
-        # Schema v2 tags each entry "type": "prompt" | "note". Pre-v2 files
-        # have no "type" key at all -- under that older schema every array
-        # entry WAS a prompt (a "note" was nested inside the same prompt
-        # entry, never a separate array item), so an absent "type" is
-        # treated as a prompt for backward compatibility.
-        prompt_entries = [p for p in entries if p.get("type", "prompt") == "prompt"]
-        n = len(prompt_entries)
+    for file, sid, data in inputlogs:
+        entries = data.get("inputs") or []
+        input_entries = [p for p in entries if p.get("type") == "input"]
+        n = len(input_entries)
         per_file_counts.append(n)
         per_session_counts[sid] = per_session_counts.get(sid, 0) + n
 
-        for p in prompt_entries:
+        for p in input_entries:
             text = p.get("text") or ""
             if longest is None or len(text) > longest[0]:
                 longest = (len(text), text, file.name, p.get("index"))
@@ -150,22 +145,22 @@ def compute_prompt_metrics(promptlogs):
         if per_session_counts else None
     )
 
-    longest_prompt = None
+    longest_input = None
     if longest is not None:
         length, value, fname, idx = longest
-        longest_prompt = {
+        longest_input = {
             "value": value,
             "length": length,
             "source_file": fname,
-            "prompt_index": idx,
+            "input_index": idx,
         }
 
     return {
-        "avg_prompts_per_promptlog": round(avg_per_file, 2),
-        "avg_prompts_per_session": round(avg_per_session, 2) if avg_per_session is not None else None,
-        "promptlog_file_count": len(promptlogs),
-        "session_count_with_promptlogs": len(per_session_counts),
-        "longest_prompt": longest_prompt,
+        "avg_inputs_per_inputlog": round(avg_per_file, 2),
+        "avg_inputs_per_session": round(avg_per_session, 2) if avg_per_session is not None else None,
+        "inputlog_file_count": len(inputlogs),
+        "session_count_with_inputlogs": len(per_session_counts),
+        "longest_input": longest_input,
     }
 
 
@@ -197,7 +192,7 @@ def compute_scale_averages(config, checkouts):
     return result, used_fallback
 
 
-def compute_short_responses(config, checkins, promptlogs, checkouts):
+def compute_short_responses(config, checkins, inputlogs, checkouts):
     """Config-driven scan of every text/textarea field across all three event types."""
     by_field = {}
     total_short = 0
@@ -218,7 +213,7 @@ def compute_short_responses(config, checkins, promptlogs, checkouts):
             total_short += short_count
 
     scan("checkin", checkins)
-    scan("promptlog", promptlogs)
+    scan("inputlog", inputlogs)
     scan("checkout", checkouts)
 
     return {
@@ -228,7 +223,7 @@ def compute_short_responses(config, checkins, promptlogs, checkouts):
     }
 
 
-def compute_longest_entries(config, checkins, promptlogs, checkouts):
+def compute_longest_entries(config, checkins, inputlogs, checkouts):
     """Longest value per field name, plus a specifically-called-out longest
     reflection (which spans three separate fields)."""
     by_field = {}
@@ -250,11 +245,11 @@ def compute_longest_entries(config, checkins, promptlogs, checkouts):
                 by_field[key] = {"value": value, "length": length, "source_file": fname}
 
     scan("checkin", checkins)
-    scan("promptlog", promptlogs)
+    scan("inputlog", inputlogs)
     scan("checkout", checkouts)
 
     longest_reflection = None
-    for path, _, data in promptlogs:
+    for path, _, data in inputlogs:
         combined = " ".join(
             str(data.get(k) or "") for k in
             ("reflection_outcome", "reflection_errors", "reflection_surprises")
@@ -277,16 +272,16 @@ def generate_summary():
     logs_path = PROJECT_ROOT / "logs"
     config = load_config()
 
-    counts, pairs, checkins, checkouts, promptlogs = compute_counts_and_pairs(logs_path)
-    prompt_metrics = compute_prompt_metrics(promptlogs)
+    counts, pairs, checkins, checkouts, inputlogs = compute_counts_and_pairs(logs_path)
+    input_metrics = compute_input_metrics(inputlogs)
     scale_averages, used_fallback = compute_scale_averages(config, checkouts)
-    short_responses = compute_short_responses(config, checkins, promptlogs, checkouts)
-    longest_entries = compute_longest_entries(config, checkins, promptlogs, checkouts)
+    short_responses = compute_short_responses(config, checkins, inputlogs, checkouts)
+    longest_entries = compute_longest_entries(config, checkins, inputlogs, checkouts)
 
-    course_title = config.get("title") or "AI Usage Logger"
+    course_title = config.get("title") or "LLM Usage Logger"
 
     caveats = [
-        "Abandoned/incomplete prompt logs (started but never finished via Finish & Reflect) "
+        "Abandoned/incomplete input logs (started but never finished via Finish & Reflect) "
         "are not saved to disk and cannot be counted from exported files.",
         "Check-in/check-out pairing uses exact session_id match only; the app assigns "
         "session_id per app-launch, not per logical work session, so a restart between "
@@ -305,7 +300,7 @@ def generate_summary():
         "course_title": course_title,
         "counts": counts,
         "session_pairs": pairs,
-        "prompts": prompt_metrics,
+        "inputs": input_metrics,
         "scale_averages": scale_averages,
         "short_responses": short_responses,
         "longest_entries": longest_entries,
@@ -326,7 +321,7 @@ def render_summary_markdown(summary):
     c = summary["counts"]
     lines.append("## Log Counts")
     lines.append(f"- Check-ins: **{c['checkin']}**")
-    lines.append(f"- Process logs: **{c['promptlog']}**")
+    lines.append(f"- Process logs: **{c['inputlog']}**")
     lines.append(f"- Check-outs: **{c['checkout']}**")
     lines.append(f"- Total: **{c['total']}**")
     lines.append("")
@@ -340,14 +335,14 @@ def render_summary_markdown(summary):
         lines.append(f"- Check-outs with no matching check-in: {', '.join(p['orphaned_checkouts'])}")
     lines.append("")
 
-    pm = summary["prompts"]
-    lines.append("## Prompt Activity")
-    if pm["promptlog_file_count"] == 0:
+    im = summary["inputs"]
+    lines.append("## Input Activity")
+    if im["inputlog_file_count"] == 0:
         lines.append("- No process logs recorded.")
     else:
-        lines.append(f"- Avg prompts per process log: **{pm['avg_prompts_per_promptlog']}**")
-        lines.append(f"- Avg prompts per session: **{pm['avg_prompts_per_session']}**")
-        lines.append(f"- Sessions with at least one process log: {pm['session_count_with_promptlogs']}")
+        lines.append(f"- Avg inputs per process log: **{im['avg_inputs_per_inputlog']}**")
+        lines.append(f"- Avg inputs per session: **{im['avg_inputs_per_session']}**")
+        lines.append(f"- Sessions with at least one process log: {im['session_count_with_inputlogs']}")
     lines.append("")
 
     lines.append("## Self-Reported Scales (checkout)")
@@ -479,7 +474,7 @@ if __name__ == "__main__":
                 f"Created: {zip_path.name}\n"
                 f"Location: {zip_path.parent}\n\n"
                 f"Upload this zip file to the course portal.",
-                "AI Usage Logger - Export Complete",
+                "LLM Usage Logger - Export Complete",
                 icon=0x40,
             )
         else:
@@ -488,7 +483,7 @@ if __name__ == "__main__":
                 f"See launch_log.txt in the app folder for details.\n\n"
                 f"Common cause: you haven't started the app yet. Run Start.vbs "
                 f"first, use the app, then export.",
-                "AI Usage Logger - Export Failed",
+                "LLM Usage Logger - Export Failed",
                 icon=0x10,
             )
 

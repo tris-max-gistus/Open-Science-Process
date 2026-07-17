@@ -2,9 +2,13 @@
 
 A simple tool to log your process as part of this course's educational research study on systems thinking, ethical generative artificial intelligence, and open science documentatin.
 
+## A note on language
+
+This tool says "LLM" (large language model) rather than "AI," and "input" rather than "prompt." That's deliberate. "AI" is a marketing category — it implies intelligence, intention, understanding. An LLM is a specific, well-understood technology: a statistical model that predicts likely text given prior text. Precise language keeps you clear-eyed about what you're actually using, and whose work — yours — is doing the thinking.
+
 ## Important: This is NOT evaulated against a rubric
 
-Your usage of AI tools is **not** judged or graded based on the patterns in this log. We're studying how students engage with AI to understand learning processes, not to enforce policies. Be honest about your process.
+Your usage of LLM tools is **not** judged or graded based on the patterns in this log. We're studying how students engage with LLMs to understand learning processes, not to enforce policies. Be honest about your process.
 
 ## Privacy & Data
 
@@ -36,9 +40,9 @@ The main page has three buttons:
 - If you answered "what should next session start with?" at your last check-out, that answer will already be filled into the goal field — edit it or leave it as-is
 
 **Process Log**
-- You do **not** check in for every individual prompt — one log covers a whole process work block
+- You do **not** check in for every individual input — one log covers a whole process work block
 - Click the button once to start a log: explain your intent and your own prediction of the approach/output
-- As you work, add each note you would like to document about the process and prompt you send to the AI one at a time — the log keeps a running, numbered list so you can see how many you've logged
+- As you work, add each note you would like to document about the process and input you send to the LLM one at a time — the log keeps a running, numbered list so you can see how many you've logged
 - The button on the main screen shows a live count while a log is open, so you always know it's still active
 - When the block is done, click "Finish & Reflect" to answer the reflection question and close the log out
 - If you click "Process Log" again without finishing, it reopens the same in-progress log — nothing is lost, but it also won't save until you explicitly finish it
@@ -88,4 +92,4 @@ Yes, you're welcome to explore the code and modify it for your own needs after t
 
 ---
 
-**Questions?** Check with your instructor. This tool is here to help you reflect on your process, not police your AI use.
+**Questions?** Check with your instructor. This tool is here to help you reflect on your process, not police your LLM use.

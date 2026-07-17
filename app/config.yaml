@@ -1,4 +1,4 @@
-# AI Usage Logger Configuration
+# LLM Usage Logger Configuration
 # Instructor-editable form fields. Edit labels and placeholders as needed.
 # Do NOT change field names or types unless you know what you're doing.
 # Note: Save this file as UTF-8 if editing to avoid encoding issues
@@ -24,7 +24,7 @@ checkin:
     type: textarea
     placeholder: "Anything else worth noting before you start -- context, blockers, reminders."
 
-promptlog:
+inputlog:
   - field: intent
     label: "What is the intended process and outcome?"
     type: textarea
@@ -35,14 +35,14 @@ promptlog:
     type: textarea
     placeholder: "What do you already know about this question? What do you need from the LLM?"
 
-  - field: prompts
-    label: "Log a prompt (what YOU typed to the AI, not the AI's response)."
-    type: prompt_list
-    placeholder: "Paste only YOUR prompt/question sent to the AI. Do NOT paste the AI's response. Add one entry per prompt."
+  - field: inputs
+    label: "Log an input (what YOU typed to the LLM, not the LLM's output)."
+    type: input_list
+    placeholder: "Paste only YOUR input/question sent to the LLM. Do NOT paste the LLM's output. Add one entry per input."
 
-  - field: prompt_notes
+  - field: input_notes
     label: "Notes on process"
-    type: prompt_notes
+    type: input_notes
     placeholder: "-- anything future you might find helpful --"
 
   - field: reflection_outcome
@@ -62,9 +62,9 @@ promptlog:
 
 artifact:
   - field: artifact_content
-    label: "Paste the AI's response or output here (not your prompt)"
+    label: "Paste the LLM's output here (not your input)"
     type: textarea
-    placeholder: "Paste the AI's output, code, and/or explanation you want to save. --Capture especially helpful LLM OUTPUTS here--."
+    placeholder: "Paste the LLM's output, code, and/or explanation you want to save. --Capture especially helpful LLM OUTPUTS here--."
 
   - field: artifact_category
     label: "Give this artifact a handle to search for later?"

@@ -19,8 +19,8 @@ import zipfile
 from datetime import datetime
 from pathlib import Path
 
-MIN_SUPPORTED_SCHEMA_VERSION = 1
-MAX_SUPPORTED_SCHEMA_VERSION = 2  # bump alongside SUMMARY_SCHEMA_VERSION in export.py
+MIN_SUPPORTED_SCHEMA_VERSION = 3
+MAX_SUPPORTED_SCHEMA_VERSION = 3  # bump alongside SUMMARY_SCHEMA_VERSION in export.py
 
 SUMMARY_JSON_ARCNAME = "summary/summary.json"
 
@@ -67,7 +67,7 @@ def flatten_summary(zip_name, summary):
 
     counts = summary.get("counts", {})
     row["count_checkin"] = counts.get("checkin")
-    row["count_promptlog"] = counts.get("promptlog")
+    row["count_inputlog"] = counts.get("inputlog")
     row["count_checkout"] = counts.get("checkout")
     row["count_total"] = counts.get("total")
 
@@ -76,10 +76,10 @@ def flatten_summary(zip_name, summary):
     row["orphaned_checkins"] = len(pairs.get("orphaned_checkins", []) or [])
     row["orphaned_checkouts"] = len(pairs.get("orphaned_checkouts", []) or [])
 
-    prompts = summary.get("prompts", {})
-    row["avg_prompts_per_promptlog"] = prompts.get("avg_prompts_per_promptlog")
-    row["avg_prompts_per_session"] = prompts.get("avg_prompts_per_session")
-    row["longest_prompt_length"] = (prompts.get("longest_prompt") or {}).get("length")
+    inputs = summary.get("inputs", {})
+    row["avg_inputs_per_inputlog"] = inputs.get("avg_inputs_per_inputlog")
+    row["avg_inputs_per_session"] = inputs.get("avg_inputs_per_session")
+    row["longest_input_length"] = (inputs.get("longest_input") or {}).get("length")
 
     for field_name, stats in (summary.get("scale_averages") or {}).items():
         row[f"scale_avg__{field_name}"] = stats.get("average")
@@ -146,9 +146,9 @@ def main():
     # afterward, sorted, so output is deterministic across runs.
     fixed_columns = [
         "zip_file", "course_title", "schema_version", "generated_at",
-        "count_checkin", "count_promptlog", "count_checkout", "count_total",
+        "count_checkin", "count_inputlog", "count_checkout", "count_total",
         "complete_pairs", "orphaned_checkins", "orphaned_checkouts",
-        "avg_prompts_per_promptlog", "avg_prompts_per_session", "longest_prompt_length",
+        "avg_inputs_per_inputlog", "avg_inputs_per_session", "longest_input_length",
         "short_responses_total", "longest_reflection_length",
     ]
     dynamic_columns = sorted({

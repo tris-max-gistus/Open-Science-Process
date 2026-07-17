@@ -2,7 +2,7 @@
 
 This tool is [open source](https://github.com/tris-max-gistus/Open-Science-Process) — you're welcome to make your own copy and change it however you like, for your own purposes. This guide walks through how, using GitHub, even if you've never used it before.
 
-**Quick reminder:** your own modified copy is for your own exploration. Whatever you submit for the actual class assignment is always the unmodified version your instructor gave you — see `ideation_prompt.md` in this folder for more on that distinction.
+**Quick reminder:** your own modified copy is for your own exploration. Whatever you submit for the actual class assignment is always the unmodified version your instructor gave you — see `ideation_input.md` in this folder for more on that distinction.
 
 ## Why bother with version control?
 
@@ -64,4 +64,4 @@ You only need to add the `upstream` remote once; after that, `git fetch upstream
 
 ---
 
-**Questions?** See `help/ask_for_help.txt` for the general "paste this into an AI chat" troubleshooting template — it works for git questions too, just describe what you're trying to do.
+**Questions?** See `help/ask_for_help.txt` for the general "paste this into an LLM chat" troubleshooting template — it works for git questions too, just describe what you're trying to do.

@@ -1,4 +1,4 @@
-' Runs the AI Usage Logger export step with no visible console window.
+' Runs the LLM Usage Logger export step with no visible console window.
 ' Double-click this file to create a submission zip. A confirmation (or
 ' error) window will appear when it's done - this can take a few seconds.
 ' Details are also logged to app\launch_log.txt.
@@ -13,7 +13,7 @@ exportScript = strPath & "\app\export.py"
 If Not objFSO.FileExists(pythonwPath) Then
     MsgBox "The app hasn't been started yet, so there's nothing to export." & vbCrLf & vbCrLf & _
            "Please run Start.vbs first, use the app for a session, then try Export again.", _
-           vbExclamation, "AI Usage Logger - Export"
+           vbExclamation, "LLM Usage Logger - Export"
     WScript.Quit 1
 End If
 

@@ -1,7 +1,7 @@
 HOW TO USE THIS FILE
 If the app won't start or gives you an error, fill in the blanks below,
 then copy this WHOLE file and paste it into Claude (claude.ai) or another
-AI chat, and ask for help. The more you fill in, the faster it can help.
+LLM chat, and ask for help. The more you fill in, the faster it can help.
 
 ------------------------------------------------------------
 ABOUT MY SITUATION (fill this in)
@@ -24,9 +24,9 @@ running from a USB drive, Python installed some other way, antivirus
 flagged something, etc.):
 
 ------------------------------------------------------------
-CONTEXT FOR THE AI HELPING ME (leave this part as-is)
+CONTEXT FOR THE LLM HELPING ME (leave this part as-is)
 
-This is a local Flask web app ("AI Usage Logger") for a course. Its
+This is a local Flask web app ("LLM Usage Logger") for a course. Its
 internals live in an `app/` subfolder that students aren't meant to
 need to open. It's meant to be launched by double-clicking Start.vbs
 or start.command in the top-level project folder (or app\start.bat for
