@@ -1,10 +1,12 @@
-# Process Logger
+# Process Documentation Tool
 
-A simple tool to log your process as part of this course's educational research study on systems thinking, ethical generative artificial intelligence, and open science documentatin.
+A simple tool to log self-guided and directed open science processes. It is intended to increase transparency and data fidelity in scientific inquiry, especially where LLMs are being used to facilitate the process.
 
 ## A note on language
 
-This tool says "LLM" (large language model) rather than "AI," and "input" rather than "prompt." That's deliberate. "AI" is a marketing category — it implies intelligence, intention, understanding. An LLM is a specific, well-understood technology: a statistical model that predicts likely text given prior text. Precise language keeps you clear-eyed about what you're actually using, and whose work — yours — is doing the thinking.
+This tool uses the term "LLM" (large language model) rather than "AI," and "input" rather than "prompt". "AI" is a marketing category; it implies intelligence, intention, understanding. An LLM is a specific and well-understood technology: a statistical model that predicts likely text given prior text. This type of explicit definition is crucial for discourse around this complex topic.
+
+This distinction is rooted in the work of Dr. Emily Bender [https://linguistics.washington.edu/people/emily-m-bender]
 
 ## Important: This is NOT evaulated against a rubric
 
@@ -37,7 +39,7 @@ The main page has three buttons:
 **Session Check-In**
 - Fill this out once at the **start** of each work session
 - Questions: project stage, goal for today, planned time, system state
-- If you answered "what should next session start with?" at your last check-out, that answer will already be filled into the goal field — edit it or leave it as-is
+- If you answered "what should next session start with?" at your last check-out, that answer will already be filled into the goal field; edit it or leave it as-is
 
 **Process Log**
 - You do **not** check in for every individual input — one log covers a whole process work block
