@@ -1,6 +1,6 @@
 # Process Documentation Tool
 
-A simple tool to log self-guided and directed open science processes. It is intended to increase transparency and data fidelity in scientific inquiry, especially where LLMs are being used to facilitate the process.
+A simple tool to log self-guided and directed open-science processes. It is intended to increase transparency and data fidelity in scientific inquiry, especially where LLMs are being used to facilitate the process.
 
 ## A note on language
 
